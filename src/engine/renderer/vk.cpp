@@ -874,9 +874,11 @@ void vk_initialize() {
 	// Sync primitives.
 	//
 	{
-		VkSemaphoreCreateInfo desc{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-		VK_CHECK(vkCreateSemaphore(vk.device, &desc, nullptr, &vk.image_acquired));
-		VK_CHECK(vkCreateSemaphore(vk.device, &desc, nullptr, &vk.rendering_finished));
+        VkSemaphoreCreateInfo desc{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        for (uint32_t i = 0; i < vk.swapchain_image_count; i++) {
+            VK_CHECK(vkCreateSemaphore(vk.device, &desc, nullptr, &vk.rendering_finished[i]));
+        }
+        VK_CHECK(vkCreateSemaphore(vk.device, &desc, nullptr, &vk.image_acquired));
 
 		VkFenceCreateInfo fence_desc{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		fence_desc.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -1384,8 +1386,10 @@ void vk_shutdown() {
 
 	vkDestroyCommandPool(vk.device, vk.command_pool, nullptr);
 
-	for (uint32_t i = 0; i < vk.swapchain_image_count; i++)
+	for (uint32_t i = 0; i < vk.swapchain_image_count; i++) {
 		vkDestroyImageView(vk.device, vk.swapchain_image_views[i], nullptr);
+		vkDestroySemaphore(vk.device, vk.rendering_finished[i], nullptr);
+	}
 
 	vkDestroyDescriptorPool(vk.device, vk.descriptor_pool, nullptr);
 	vkDestroyDescriptorPool(vk.device, vk.gamma_descriptor_pool, nullptr);
@@ -1399,7 +1403,6 @@ void vk_shutdown() {
 	vkDestroyBuffer(vk.device, vk.gamma_buffer, nullptr);
 	vkFreeMemory(vk.device, vk.gamma_buffer_memory, nullptr);
 	vkDestroySemaphore(vk.device, vk.image_acquired, nullptr);
-	vkDestroySemaphore(vk.device, vk.rendering_finished, nullptr);
 	vkDestroyFence(vk.device, vk.rendering_finished_fence, nullptr);
 
 	vkDestroyShaderModule(vk.device, vk.single_texture_vs, nullptr);
@@ -2447,16 +2450,16 @@ void vk_end_frame() {
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers = &vk.command_buffer;
 	submit_info.signalSemaphoreCount = 1;
-	submit_info.pSignalSemaphores = &vk.rendering_finished;
+	submit_info.pSignalSemaphores = &vk.rendering_finished[vk.swapchain_image_index];
 	VK_CHECK(vkQueueSubmit(vk.queue, 1, &submit_info, vk.rendering_finished_fence));
 
-	VkPresentInfoKHR present_info{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-	present_info.waitSemaphoreCount = 1;
-	present_info.pWaitSemaphores = &vk.rendering_finished;
-	present_info.swapchainCount = 1;
-	present_info.pSwapchains = &vk.swapchain;
-	present_info.pImageIndices = &vk.swapchain_image_index;
-	VK_CHECK(vkQueuePresentKHR(vk.queue, &present_info));
+    VkPresentInfoKHR present_info{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &vk.rendering_finished[vk.swapchain_image_index];
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &vk.swapchain;
+    present_info.pImageIndices = &vk.swapchain_image_index;
+    VK_CHECK(vkQueuePresentKHR(vk.queue, &present_info));
 }
 
 void vk_read_pixels(byte* buffer) {

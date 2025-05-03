@@ -122,10 +122,10 @@ struct Vk_Instance {
 	uint32_t swapchain_image_count = 0;
 	VkImage swapchain_images[MAX_SWAPCHAIN_IMAGES];
 	VkImageView swapchain_image_views[MAX_SWAPCHAIN_IMAGES];
+	VkSemaphore rendering_finished[MAX_SWAPCHAIN_IMAGES];
 	uint32_t swapchain_image_index = -1;
 
 	VkSemaphore image_acquired = VK_NULL_HANDLE;
-	VkSemaphore rendering_finished = VK_NULL_HANDLE;
 	VkFence rendering_finished_fence = VK_NULL_HANDLE;
 
 	VkCommandPool command_pool = VK_NULL_HANDLE;
