@@ -578,6 +578,7 @@ static void create_device() {
 		VkPhysicalDeviceFeatures features{};
 		features.shaderClipDistance = VK_TRUE;
 		features.fillModeNonSolid = VK_TRUE;
+		features.shaderStorageImageWriteWithoutFormat = VK_TRUE;
 
 		VkDeviceCreateInfo device_desc{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 		device_desc.queueCreateInfoCount = 1;
@@ -830,12 +831,14 @@ void create_gamma_pipeline();
 void vk_initialize() {
 	init_vulkan_library();
 
-	VkPhysicalDeviceFeatures features;
-	vkGetPhysicalDeviceFeatures(vk.physical_device, &features);
-	if (features.shaderClipDistance == VK_FALSE)
-		ri.Error(ERR_FATAL, "vk_create_instance: shaderClipDistance feature is not supported");
-	if (features.fillModeNonSolid == VK_FALSE)
-		ri.Error(ERR_FATAL, "vk_create_instance: fillModeNonSolid feature is not supported");
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(vk.physical_device, &features);
+    if (features.shaderClipDistance == VK_FALSE)
+        ri.Error(ERR_FATAL, "vk_create_instance: shaderClipDistance feature is not supported");
+    if (features.fillModeNonSolid == VK_FALSE)
+        ri.Error(ERR_FATAL, "vk_create_instance: fillModeNonSolid feature is not supported");
+    if (features.shaderStorageImageWriteWithoutFormat == VK_FALSE)
+        ri.Error(ERR_FATAL, "vk_create_instance: shaderStorageImageWriteWithoutFormat feature is not supported");
 
 	vkGetDeviceQueue(vk.device, vk.queue_family_index, 0, &vk.queue);
 
